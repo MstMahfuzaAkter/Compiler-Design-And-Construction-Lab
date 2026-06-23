@@ -1,0 +1,20 @@
+%{
+#include<stdio.h>
+%}
+
+%%
+"017"[0-9]{8}    { printf("GP Number\n"); }
+"018"[0-9]{8}    { printf("Robi Number\n"); }
+"016"[0-9]{8}    { printf("Airtel Number\n"); }
+"019"[0-9]{8}    { printf("Banglalink Number\n"); }
+"013"[0-9]{8}    { printf("Teletalk Number\n"); }
+.|\n ;
+%%
+
+int yywrap(){ return 1; }
+
+int main()
+{
+    yylex();
+    return 0;
+}
