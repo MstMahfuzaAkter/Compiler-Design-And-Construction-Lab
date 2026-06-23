@@ -20,3 +20,711 @@ int main()
 }
 
 2)
+%{
+#include<stdio.h>
+
+int chars=0, words=0, lines=0;
+%}
+
+%%
+\n      { lines++; chars++; }
+[ \t]+  { chars += yyleng; }
+[^ \t\n]+ { words++; chars += yyleng; }
+%%
+
+int yywrap(){ return 1; }
+
+int main()
+{
+    yylex();
+
+    printf("Characters = %d\n", chars);
+    printf("Words = %d\n", words);
+    printf("Lines = %d\n", lines);
+
+    return 0;
+}
+
+3)
+%{
+#include<stdio.h>
+%}
+
+%%
+[+-]?[0-9]+ {
+    printf("Integer : %s\n",yytext);
+}
+
+[+-]?[0-9]+"."[0-9]+ {
+    printf("Float : %s\n",yytext);
+}
+
+[+-]?[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]+ {
+    printf("Exponential : %s\n",yytext);
+}
+
+[+-]?[0-9]+(\.[0-9]+)?[+-][0-9]+(\.[0-9]+)?i {
+    printf("Complex : %s\n",yytext);
+}
+
+.|\n ;
+%%
+
+int yywrap(){ return 1; }
+
+int main()
+{
+    yylex();
+    return 0;
+}
+
+4)
+%{
+#include<stdio.h>
+
+int spaces=0;
+int comments=0;
+%}
+
+%%
+"//".*                 { comments++; }
+
+"/*"([^*]|\*+[^*/])*\*+"/" {
+    comments++;
+}
+
+[ ]                    { spaces++; }
+
+.|\n ;
+%%
+
+int yywrap(){ return 1; }
+
+int main()
+{
+    yylex();
+
+    printf("Spaces = %d\n", spaces);
+    printf("Comments = %d\n", comments);
+
+    return 0;
+}
+
+5)
+%{
+#include<stdio.h>
+int count=0;
+%}
+
+%%
+
+"auto"|"break"|"case"|"char"|"const"|"continue"|"default"|"do"|"double"|"else"|"enum"|"extern"|"float"|"for"|"goto"|"if"|"int"|"long"|"register"|"return"|"short"|"signed"|"sizeof"|"static"|"struct"|"switch"|"typedef"|"union"|"unsigned"|"void"|"volatile"|"while" ;
+
+[a-zA-Z_][a-zA-Z0-9_]* {
+    count++;
+    printf("Identifier : %s\n", yytext);
+}
+
+.|\n ;
+
+%%
+
+int yywrap()
+{
+    return 1;
+}
+
+int main()
+{
+    yylex();
+
+    printf("\nTotal Identifiers = %d\n", count);
+
+    return 0;
+}
+
+6)
+%{
+#include<stdio.h>
+%}
+
+%%
+"is"|"am"|"are"|"was"|"were"|"be"|"been"|"being" {
+    printf("To Be Verb : %s\n",yytext);
+}
+
+.|\n ;
+%%
+
+int yywrap(){ return 1; }
+
+int main()
+{
+    yylex();
+    return 0;
+}
+
+7)
+%{
+#include<stdio.h>
+%}
+
+%%
+.*"and".*|.*"but".*|.*"or".* { printf("Compound Sentence\n"); }
+
+.*"because".*|.*"although".*|.*"since".* { printf("Complex Sentence\n"); }
+
+.* { printf("Simple Sentence\n"); }
+
+\n ;
+%%
+
+int yywrap(){ return 1; }
+
+int main()
+{
+    yylex();
+    return 0;
+}
+
+7)
+%{
+#include<stdio.h>
+%}
+
+%%
+.*"and".*|.*"but".*|.*"or".* { printf("Compound Sentence\n"); }
+
+.*"because".*|.*"although".*|.*"since".* { printf("Complex Sentence\n"); }
+
+.* { printf("Simple Sentence\n"); }
+
+\n ;
+%%
+
+int yywrap(){ return 1; }
+
+int main()
+{
+    yylex();
+    return 0;
+}
+
+
+7)
+%{
+#include<stdio.h>
+%}
+
+%%
+.*"and".*|.*"but".*|.*"or".*|.*"And".*|.*"But".*|.*"Or".* { printf("Compound Sentence\n"); }
+
+.*"because".*|.*"although".*|.*"since".*|.*"Because".*|.*"Although".*|.*"Since".* { printf("Complex Sentence\n"); }
+
+[a-zA-Z0-9]+[ ]+[a-zA-Z0-9]+.*|.*"\."|.*"\!"|.*"\?" { printf("Simple Sentence\n"); }
+
+.* { printf("Not a Valid Sentence\n"); }
+
+\n ;
+%%
+
+int yywrap(){ return 1; }
+
+int main()
+{
+    yylex();
+    return 0;
+}
+
+8)
+%{
+#include <stdio.h>
+
+char output[10000];
+int pos = 0;
+
+void addOutput(const char *type, const char *value) {
+    pos += sprintf(output + pos, "%s : %s\n", type, value);
+}
+%}
+
+%%
+
+\#include[ \t]*\<stdio\.h\> {
+    addOutput("PREPROCESSOR", "#include<stdio.h>");
+}
+
+"auto"|"break"|"case"|"char"|"const"|"continue"|"default"|"do"|"double"|"else"|"enum"|"extern"|"float"|"for"|"goto"|"if"|"int"|"long"|"register"|"return"|"short"|"signed"|"sizeof"|"static"|"struct"|"switch"|"typedef"|"union"|"unsigned"|"void"|"volatile"|"while" {
+    addOutput("KEYWORD", yytext);
+}
+
+[0-9]+"."[0-9]+ {
+    addOutput("CONSTANT", yytext);
+}
+
+[0-9]+ {
+    addOutput("CONSTANT", yytext);
+}
+
+[a-zA-Z_][a-zA-Z0-9_]* {
+    addOutput("IDENTIFIER", yytext);
+}
+
+[+\-*/=<>]+ {
+    addOutput("OPERATOR", yytext);
+}
+
+[(){};,] {
+    addOutput("PUNCTUATOR", yytext);
+}
+
+[ \t\n]+ ;
+
+. {
+    addOutput("UNKNOWN", yytext);
+}
+
+%%
+
+int yywrap() {
+    return 1;
+}
+
+int main() {
+    printf("Tokenizing Input Code...\n\n");
+
+    yylex();
+
+    printf("%s", output);
+
+    return 0;
+}
+
+
+9)
+# FIRST and FOLLOW Calculation
+
+grammar = {
+    'E': ['TA'],
+    'A': ['+TA', 'e'],
+    'T': ['FB'],
+    'B': ['*FB', 'e'],
+    'F': ['(E)', 'i']
+}
+
+FIRST = {}
+FOLLOW = {}
+
+non_terminals = list(grammar.keys())
+
+for nt in non_terminals:
+    FIRST[nt] = set()
+    FOLLOW[nt] = set()
+
+FOLLOW['E'].add('$')  # Start symbol
+
+
+def first(symbol):
+    if symbol not in grammar:
+        return {symbol}
+
+    if FIRST[symbol]:
+        return FIRST[symbol]
+
+    result = set()
+
+    for production in grammar[symbol]:
+        if production == 'e':
+            result.add('e')
+        else:
+            first_char = production[0]
+            result.update(first(first_char))
+
+    FIRST[symbol] = result
+    return result
+
+
+# Calculate FIRST
+for nt in non_terminals:
+    first(nt)
+
+# Calculate FOLLOW
+changed = True
+while changed:
+    changed = False
+
+    for lhs in grammar:
+        for production in grammar[lhs]:
+
+            for i in range(len(production)):
+                symbol = production[i]
+
+                if symbol in grammar:
+
+                    if i + 1 < len(production):
+                        next_symbol = production[i + 1]
+
+                        if next_symbol in grammar:
+                            old = len(FOLLOW[symbol])
+
+                            FOLLOW[symbol].update(
+                                first(next_symbol) - {'e'}
+                            )
+
+                            if len(FOLLOW[symbol]) > old:
+                                changed = True
+                        else:
+                            old = len(FOLLOW[symbol])
+
+                            FOLLOW[symbol].add(next_symbol)
+
+                            if len(FOLLOW[symbol]) > old:
+                                changed = True
+
+                    else:
+                        old = len(FOLLOW[symbol])
+
+                        FOLLOW[symbol].update(FOLLOW[lhs])
+
+                        if len(FOLLOW[symbol]) > old:
+                            changed = True
+
+print("FIRST Sets")
+for nt in non_terminals:
+    print(f"FIRST({nt}) = {{ {', '.join(sorted(FIRST[nt]))} }}")
+
+print("\nFOLLOW Sets")
+for nt in non_terminals:
+    print(f"FOLLOW({nt}) = {{ {', '.join(sorted(FOLLOW[nt]))} }}")
+
+
+
+
+10)
+def remove_left_recursion():
+    n = int(input("Enter production number: "))
+    
+    productions = []
+    print("Enter production (e.g., A->Aa/b):")
+    for _ in range(n):
+        productions.append(input().strip())
+        
+    result = []
+    
+    for prod in productions:
+        if "->" in prod:
+            lhs, rhs_all = prod.split("->")
+        elif ">" in prod:
+            lhs, rhs_all = prod.split(">")
+        else:
+            continue
+            
+        lhs = lhs.strip()
+        alternatives = [alt.strip() for alt in rhs_all.split('/')]
+        
+        has_left_recursion = False
+        alphas = []
+        betas = []
+        
+        for alt in alternatives:
+            if alt.startswith(lhs):
+                has_left_recursion = True
+                alphas.append(alt[len(lhs):])
+            else:
+                betas.append(alt)
+                
+        if has_left_recursion:
+            print(f"Checking: Production '{prod}' has Left Recursion.")
+            
+            if not betas:
+                result.append(f"{lhs}->{lhs}'")
+            else:
+                beta_str = "/".join([f"{b}{lhs}'" for b in betas])
+                result.append(f"{lhs}->{beta_str}")
+                
+            alpha_str = "/".join([f"{a}{lhs}'" for a in alphas])
+            result.append(f"{lhs}'->{alpha_str}/E")
+        else:
+            print(f"Checking: Production '{prod}' does not have Left Recursion.")
+            result.append(prod)
+
+    print("\nYour Required production removing left recursions is given below:")
+    for res in result:
+        print(f"\t\t{res}")
+
+if __name__ == "__main__":
+    remove_left_recursion()
+
+
+
+
+10))
+def check_and_remove_ambiguity():
+    n = int(input("Enter production number: "))
+    
+    productions = []
+    print("Enter production (e.g., E->E+E/i or A->Aa/b):")
+    for _ in range(n):
+        productions.append(input().strip())
+        
+    result = []
+    is_grammar_ambiguous = False
+    
+    for prod in productions:
+        if "->" in prod:
+            lhs, rhs_all = prod.split("->")
+        elif ">" in prod:
+            lhs, rhs_all = prod.split(">")
+        else:
+            continue
+            
+        lhs = lhs.strip()
+        alternatives = [alt.strip() for alt in rhs_all.split('/')]
+        
+        is_prod_ambiguous = False
+        for alt in alternatives:
+            if alt.count(lhs) >= 2 or (alt.startswith(lhs) and alt.endswith(lhs) and len(alt) > len(lhs)):
+                is_prod_ambiguous = True
+                is_grammar_ambiguous = True
+                break
+                
+        if is_prod_ambiguous:
+            print(f"\n[!] Production '{prod}' is AMBIGUOUS.")
+        else:
+            print(f"\n[-] Production '{prod}' is NOT AMBIGUOUS.")
+            
+        has_left_recursion = False
+        alphas = []
+        betas = []
+        
+        for alt in alternatives:
+            if alt.startswith(lhs):
+                has_left_recursion = True
+                alphas.append(alt[len(lhs):])
+            else:
+                betas.append(alt)
+                
+        if has_left_recursion:
+            if not betas:
+                result.append(f"{lhs}->{lhs}'")
+            else:
+                beta_str = "/".join([f"{b}{lhs}'" for b in betas])
+                result.append(f"{lhs}->{beta_str}")
+                
+            alpha_str = "/".join([f"{a}{lhs}'" for a in alphas])
+            result.append(f"{lhs}'->{alpha_str}/E")
+        else:
+            result.append(prod)
+
+    if is_grammar_ambiguous:
+        print("\n>>> Overall Grammar Status: AMBIGUOUS")
+        print(">>> Resolution: Ambiguity removed using Left-Recursion elimination rules.")
+    else:
+        print("\n>>> Overall Grammar Status: NOT AMBIGUOUS")
+
+    print("\nYour Required Non-Ambiguous/Processed Grammar:")
+    for res in result:
+        print(f"\t\t{res}")
+
+if __name__ == "__main__":
+    check_and_remove_ambiguity()
+
+
+
+
+
+
+
+100000000000000000000000000)))))))))
+import copy
+from collections import defaultdict
+
+EPSILON = 'ε'
+
+class AmbiguityHandler:
+    def __init__(self, grammar: dict, start_symbol: str):
+        self.grammar = copy.deepcopy(grammar)
+        self.start = start_symbol
+        self.non_terminals = set(grammar.keys())
+
+    def has_direct_left_recursion(self):
+        for nt, prods in self.grammar.items():
+            for prod in prods:
+                if prod and prod[0] == nt:
+                    return True
+        return False
+
+    def has_indirect_left_recursion(self):
+        def can_start_with(nt, target, visited=None):
+            if visited is None:
+                visited = set()
+            if nt in visited:
+                return False
+            visited.add(nt)
+            for prod in self.grammar.get(nt, []):
+                if not prod or prod == [EPSILON]:
+                    continue
+                first_sym = prod[0]
+                if first_sym == target:
+                    return True
+                if first_sym in self.non_terminals:
+                    if can_start_with(first_sym, target, visited.copy()):
+                        return True
+            return False
+
+        for nt in self.non_terminals:
+            if can_start_with(nt, nt):
+                return True
+        return False
+
+    def has_common_prefix(self):
+        for nt, prods in self.grammar.items():
+            prefixes = [prod[0] for prod in prods if prod and prod != [EPSILON]]
+            if len(prefixes) != len(set(prefixes)):
+                return True
+        return False
+
+    def is_ambiguous(self):
+        reasons = []
+        if self.has_direct_left_recursion():
+            reasons.append("direct left recursion")
+        if self.has_indirect_left_recursion():
+            reasons.append("indirect left recursion")
+        if self.has_common_prefix():
+            reasons.append("common prefixes (not left-factored)")
+        return bool(reasons), reasons
+
+    def remove_left_recursion(self):
+        g = copy.deepcopy(self.grammar)
+        nts = list(g.keys())
+        counter = {}
+
+        def new_nt(base):
+            prime = base + "'"
+            count = counter.get(base, 0) + 1
+            counter[base] = count
+            return prime if count == 1 else prime + str(count)
+
+        for i, Ai in enumerate(nts):
+            for j in range(i):
+                Aj = nts[j]
+                new_prods = []
+                for prod in g[Ai]:
+                    if prod and prod[0] == Aj:
+                        for aj_prod in g[Aj]:
+                            if aj_prod == [EPSILON]:
+                                new_prods.append(prod[1:] if len(prod) > 1 else [EPSILON])
+                            else:
+                                new_prods.append(aj_prod + prod[1:])
+                    else:
+                        new_prods.append(prod)
+                g[Ai] = new_prods
+
+            alpha_list = []
+            beta_list = []
+            for prod in g[Ai]:
+                if prod and prod[0] == Ai:
+                    alpha_list.append(prod[1:] if len(prod) > 1 else [EPSILON])
+                else:
+                    beta_list.append(prod)
+
+            if alpha_list:
+                Ai_prime = new_nt(Ai)
+                g[Ai] = [b + [Ai_prime] for b in beta_list] if beta_list else [[Ai_prime]]
+                g[Ai_prime] = [a + [Ai_prime] for a in alpha_list] + [[EPSILON]]
+                nts.append(Ai_prime)
+                self.non_terminals.add(Ai_prime)
+        return g
+
+    def left_factor(self, grammar=None):
+        if grammar is None:
+            grammar = copy.deepcopy(self.grammar)
+        changed = True
+        counter = {}
+
+        def new_nt(base):
+            prime = base + "'"
+            count = counter.get(base, 0) + 1
+            counter[base] = count
+            return prime if count == 1 else prime + str(count)
+
+        while changed:
+            changed = False
+            new_grammar = {}
+            for nt, prods in list(grammar.items()):
+                groups = defaultdict(list)
+                no_prefix = []
+                for prod in prods:
+                    if prod and prod != [EPSILON]:
+                        groups[prod[0]].append(prod)
+                    else:
+                        no_prefix.append(prod)
+                
+                new_prods = list(no_prefix)
+                for prefix, group in groups.items():
+                    if len(group) == 1:
+                        new_prods.append(group[0])
+                    else:
+                        lcp = group[0]
+                        for g_prod in group[1:]:
+                            i = 0
+                            while i < len(lcp) and i < len(g_prod) and lcp[i] == g_prod[i]:
+                                i += 1
+                            lcp = lcp[:i]
+                        
+                        if len(lcp) == 0:
+                            new_prods.extend(group)
+                        else:
+                            nt_prime = new_nt(nt)
+                            new_prods.append(lcp + [nt_prime])
+                            remainders = [p[len(lcp):] or [EPSILON] for p in group]
+                            new_grammar[nt_prime] = remainders
+                            changed = True
+                new_grammar[nt] = new_prods
+            
+            for k, v in grammar.items():
+                if k not in new_grammar:
+                    new_grammar[k] = v
+            grammar = new_grammar
+        return grammar
+
+    def process(self):
+        ambiguous, reasons = self.is_ambiguous()
+        print("=" * 55)
+        print(" CFG Ambiguity Analysis")
+        print("=" * 55)
+        print("\n Original Grammar:")
+        self._print_grammar(self.grammar)
+        
+        if not ambiguous:
+            print("\n Grammar is UNAMBIGUOUS. No transformation needed.")
+            return self.grammar
+            
+        print(f"\n Grammar is AMBIGUOUS!")
+        print(" Reasons detected:")
+        for r in reasons:
+            print(f" • {r}")
+            
+        print("\n Step 1 → Removing Left Recursion...")
+        no_lr = self.remove_left_recursion()
+        self._print_grammar(no_lr)
+        
+        print("\n Step 2 → Applying Left Factoring...")
+        factored = self.left_factor(no_lr)
+        print(" Final Unambiguous Grammar:")
+        self._print_grammar(factored)
+        print("=" * 55)
+        return factored
+
+    def _print_grammar(self, grammar):
+        for nt in sorted(grammar.keys()):
+            prods = grammar[nt]
+            prod_strs = [" ".join(p) if p != [EPSILON] else EPSILON for p in prods]
+            print(f" {nt} → {' | '.join(prod_strs)}")
+
+if __name__ == "__main__":
+    ambiguous_grammar = {
+        'E': [['E', '+', 'E'], ['E', '*', 'E'], ['(', 'E', ')'], ['id']],
+    }
+    handler = AmbiguityHandler(ambiguous_grammar, start_symbol='E')
+    handler.process()
